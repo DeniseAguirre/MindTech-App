@@ -1,4 +1,3 @@
-import { useState } from "react";
 import {
   View,
   Text,
@@ -7,11 +6,15 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Dimensions,
+  ScrollView,
 } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import useStore from "../store/store";
 import LoginModal from "../components/LoginModal";
-import { Icon } from "react-native-paper";
+import { Icon, IconButton } from "react-native-paper";
+import { Border, Color, FontFamily, FontSize } from "../../GlobalStyles";
+import CartHeader from "../components/CartHeader";
 
 const Details = () => {
   const route = useRoute();
@@ -19,7 +22,6 @@ const Details = () => {
   const navigation = useNavigation();
   const { addToCart, toggleFavorite, favorites, isLoading, error, user } =
     useStore();
-  const [modalVisible, setModalVisible] = useState(false);
 
   const isFavorite = favorites.some((fav) => fav._id === item._id);
 
@@ -47,11 +49,6 @@ const Details = () => {
     }
   };
 
-  const handleLogin = () => {
-    setModalVisible(false);
-    navigation.navigate("SignIn");
-  };
-
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
@@ -61,28 +58,43 @@ const Details = () => {
   }
 
   return (
-    <View style={styles.container}>
-      <Image source={{ uri: item.images[0] }} style={styles.image} />
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.price}>{item.price.toFixed(2)} €</Text>
-      <TouchableOpacity
-        style={styles.favoriteButton}
-        onPress={handleToggleFavorite}
-      >
-        <Icon
-          source={isFavorite ? "heart" : "heart-outline"}
-          size={28}
-          color={isFavorite ? "red" : "black"}
+    <View style={{ flex: 1 }}>
+      <View style={styles.headerContainer}>
+        <IconButton
+          style={styles.backIcon}
+          icon="arrow-left"
+          iconColor={"#000"}
+          size={20}
+          onPress={() => navigation.goBack()}
         />
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={handleAddToCart}>
-        <Text style={styles.buttonText}>AÑADIR AL CARRITO</Text>
-      </TouchableOpacity>
-      <LoginModal
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onLogin={handleLogin}
-      />
+        <Text style={styles.categoryName}>{item.category.name}</Text>
+        <CartHeader />
+      </View>
+      <ScrollView>
+        <Image style={styles.image} source={{ uri: item.images[0] }} />
+        <View style={styles.productDetail}>
+          <Text style={styles.productName}>{item?.name}</Text>
+          <Text style={styles.productBrand}>{item.brand.name}</Text>
+          <Text style={styles.productPrice}>{item.price.toFixed(2)} €</Text>
+          <TouchableOpacity
+            style={styles.favoriteButton}
+            onPress={handleToggleFavorite}
+          >
+            <Icon
+              source={isFavorite ? "heart" : "heart-outline"}
+              size={28}
+              color={isFavorite ? "red" : "white"}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.buttonAddToBag}
+            onPress={handleAddToCart}
+          >
+            <Text style={styles.textButtonAddToBag}>ADD TO BAG</Text>
+          </TouchableOpacity>
+          <Text style={styles.productDescription}>{item.description}</Text>
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -94,9 +106,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   image: {
-    width: 200,
-    height: 200,
-    marginBottom: 20,
+    height: 360,
+    marginVertical: 20,
   },
   name: {
     fontSize: 24,
@@ -120,12 +131,78 @@ const styles = StyleSheet.create({
   favoriteButton: {
     position: "absolute",
     top: 60,
-    right: 20,
+    right: 40,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+  },
+  headerContainer: {
+    width: Dimensions.get("window").width,
+    top: 60,
+    paddingLeft: 20,
+    marginBottom: 10,
+    flexDirection: "row",
+    alignContent: "center",
+  },
+  backIcon: {
+    top: -15,
+    left: -15,
+  },
+  categoryName: {
+    letterSpacing: 8,
+    width: 238,
+    height: 79,
+    fontSize: FontSize.size_base,
+    color: Color.black,
+    fontWeight: 700,
+    textAlign: "center",
+  },
+
+  productDetail: {
+    backgroundColor: Color.black,
+    height: "100%",
+    padding: 20,
+    borderTopEndRadius: 60,
+  },
+  productName: {
+    color: Color.white,
+    fontSize: FontSize.size_mid,
+    letterSpacing: 4,
+    paddingBottom: 10,
+    fontWeight: "bold",
+    width: "80%",
+    fontFamily: FontFamily.montserratSemibold,
+  },
+  productPrice: {
+    color: Color.white,
+    fontSize: 30,
+    letterSpacing: 4,
+    paddingBottom: 20,
+    fontFamily: FontFamily.montserratSemibold,
+  },
+  buttonAddToBag: {
+    backgroundColor: "#00a524da",
+    height: 40,
+    width: "95%",
+    borderRadius: Border.br_4xl_1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  textButtonAddToBag: {
+    color: "white",
+    letterSpacing: 4,
+    textAlign: "center",
+    fontSize: FontSize.size_xs,
+    fontWeight: 700,
+  },
+  productDescription: {
+    marginHorizontal: 5,
+    color: "#fff",
+    marginVertical: 40,
+    fontFamily: FontFamily.montserratLight,
+    lineHeight: 23,
   },
 });
 

@@ -16,7 +16,7 @@ import { Card, IconButton, Searchbar, Text } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 
 function FiltersStore() {
-  const apiUrl = "https://mind-tech-back.onrender.com/";
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   const navigation = useNavigation();
 
   const [categories, setCategories] = useState([]);

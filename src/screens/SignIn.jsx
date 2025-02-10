@@ -21,7 +21,7 @@ function SignIn() {
   const [textEmail, setTextEmail] = useState("");
   const [textPassword, setTextPassword] = useState("");
   const { login, user, logout, getUser } = useStore();
-  const apiUrl = "https://mindtech-back.onrender.com/";
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [name, setName] = useState("");
   const [userId, setUserId] = useState("");
