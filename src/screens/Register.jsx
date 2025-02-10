@@ -6,13 +6,13 @@ import {
   StyleSheet,
   Dimensions,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { Color, Border, FontSize } from "../../GlobalStyles";
 import { TextInput, IconButton } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import useStore from "../store/store";
-import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 function Register() {
@@ -21,7 +21,7 @@ function Register() {
   const [textEmail, setTextEmail] = React.useState("");
   const [textPassword, setTextPassword] = React.useState("");
   const { login } = useStore();
-  const apiUrl = "https://mindtech-back.onrender.com/";
+  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
   async function handleSubmit() {
     let data = {

@@ -2,7 +2,7 @@ import axios from "axios";
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const apiUrl = "https://mindtech-back.onrender.com/";
+const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
 const useStore = create((set, get) => ({
   allProducts: [],

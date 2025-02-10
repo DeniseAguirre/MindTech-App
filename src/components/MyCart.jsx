@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   cardItem: {
     marginBottom: 10,
   },
-  // ... (los estilos se mantienen igual)
+
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
