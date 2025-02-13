@@ -15,8 +15,13 @@ import { useRoute, useNavigation } from "@react-navigation/native";
 import useStore from "../store/store";
 
 function Search() {
-  const { allProducts,  getAllProducts, favorites, handleFavorite, removeFavorite} =
-    useStore();
+  const {
+    allProducts,
+    getAllProducts,
+    favorites,
+    handleFavorite,
+    removeFavorite,
+  } = useStore();
   const route = useRoute();
   const numColumns = 2;
   const [favoriteItems, setFavoriteItems] = useState([]);
@@ -31,15 +36,16 @@ function Search() {
   }, []);
 
   const filterProducts = (products) => {
-    if(route?.params?.searchQuery == undefined){
+    if (route?.params?.searchQuery == undefined) {
       return [];
     } else {
-    return products?.filter((product) =>
-      product?.name?.toLowerCase()?.includes(route?.params?.searchQuery?.toLowerCase())
-    );
-  }
+      return products?.filter((product) =>
+        product?.name
+          ?.toLowerCase()
+          ?.includes(route?.params?.searchQuery?.toLowerCase())
+      );
+    }
   };
-
 
   const shortenText = (text) => {
     if (text.length <= maxLength) {
@@ -51,7 +57,6 @@ function Search() {
 
   useEffect(() => {
     getAllProducts();
-    console.log(allProducts);
   }, [getAllProducts]);
 
   useEffect(() => {
@@ -102,9 +107,10 @@ function Search() {
               icon={isFavorite ? "heart" : "heart-outline"}
               color={isFavorite ? "#FF0000" : "#000000"}
               size={20}
-              onPress={() => {toggleFavorite(item._id);
-                if(isFavorite){
-                  removeFavorite(item._id)
+              onPress={() => {
+                toggleFavorite(item._id);
+                if (isFavorite) {
+                  removeFavorite(item._id);
                 } else {
                   handleFavorite(item._id, item.name, item.images[0]);
                 }
@@ -120,23 +126,28 @@ function Search() {
     <View>
       <Header />
       <SearchBar />
-      {filterProducts(allProducts)?.length == 0 || route?.params?.searchQuery == undefined ? <Text style={styles.textResults}>No results found, try another term</Text>
-      :
-      <View style={styles.container}>
-        {loading ? (
-          <ActivityIndicator />
-        ) : (
-          <FlatList
-            data={filterProducts(allProducts)}
-            horizontal={false}
-            renderItem={renderItem}
-            keyExtractor={(item) => item._id}
-            contentContainerStyle={styles.gridContainer}
-            key={`flatlist-${numColumns}`}
-            numColumns={numColumns}
-          />
-        )}
-      </View>}
+      {filterProducts(allProducts)?.length == 0 ||
+      route?.params?.searchQuery == undefined ? (
+        <Text style={styles.textResults}>
+          No results found, try another term
+        </Text>
+      ) : (
+        <View style={styles.container}>
+          {loading ? (
+            <ActivityIndicator />
+          ) : (
+            <FlatList
+              data={filterProducts(allProducts)}
+              horizontal={false}
+              renderItem={renderItem}
+              keyExtractor={(item) => item._id}
+              contentContainerStyle={styles.gridContainer}
+              key={`flatlist-${numColumns}`}
+              numColumns={numColumns}
+            />
+          )}
+        </View>
+      )}
     </View>
   );
 }
@@ -158,7 +169,6 @@ const styles = StyleSheet.create({
   gridContainer: {
     padding: 1,
     margin: 10,
-
   },
   item: {
     marginBottom: 20,
