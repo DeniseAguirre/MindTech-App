@@ -11,6 +11,8 @@ const useStore = create((set, get) => ({
   token: undefined,
   cart: { items: [], total: 0 },
   favorites: [],
+  categories: [],
+  brands: [],
   selectCheckboxes: [],
   isLoading: false,
   error: null,
@@ -18,19 +20,29 @@ const useStore = create((set, get) => ({
   initializeStore: async () => {
     set({ isLoading: true });
     try {
-      const [token, cartData, favoritesData, allProductsData] =
-        await Promise.all([
-          AsyncStorage.getItem("token"),
-          AsyncStorage.getItem("cart"),
-          AsyncStorage.getItem("favorites"),
-          AsyncStorage.getItem("allProducts"),
-        ]);
+      const [
+        token,
+        cartData,
+        favoritesData,
+        allProductsData,
+        categoriesData,
+        brandsData,
+      ] = await Promise.all([
+        AsyncStorage.getItem("token"),
+        AsyncStorage.getItem("cart"),
+        AsyncStorage.getItem("favorites"),
+        AsyncStorage.getItem("allProducts"),
+        AsyncStorage.getItem("categories"),
+        AsyncStorage.getItem("brands"),
+      ]);
 
       set({
         token,
         cart: cartData ? JSON.parse(cartData) : { items: [], total: 0 },
         favorites: favoritesData ? JSON.parse(favoritesData) : [],
         allProducts: allProductsData ? JSON.parse(allProductsData) : [],
+        categories: categoriesData ? JSON.parse(categoriesData) : [],
+        brands: brandsData ? JSON.parse(brandsData) : [],
         isLoading: false,
       });
     } catch (error) {
@@ -41,12 +53,36 @@ const useStore = create((set, get) => ({
   getAllProducts: async () => {
     set({ isLoading: true });
     try {
-      const response = await axios.get(apiUrl + "products/all");
+      const response = await axios.get(`${apiUrl}products/all`);
       const products = response.data.products;
       await AsyncStorage.setItem("allProducts", JSON.stringify(products));
       set({ allProducts: products, isLoading: false });
     } catch (error) {
       set({ error: "Error al obtener productos", isLoading: false });
+    }
+  },
+
+  getCategories: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get(`${apiUrl}categories`);
+      const categories = response.data.categories;
+      await AsyncStorage.setItem("categories", JSON.stringify(categories));
+      set({ categories, isLoading: false });
+    } catch (error) {
+      set({ error: "Error al obtener categorías", isLoading: false });
+    }
+  },
+
+  getBrands: async () => {
+    set({ isLoading: true });
+    try {
+      const response = await axios.get(`${apiUrl}brands`);
+      const brands = response.data.brands;
+      await AsyncStorage.setItem("brands", JSON.stringify(brands));
+      set({ brands, isLoading: false });
+    } catch (error) {
+      set({ error: "Error al obtener marcas", isLoading: false });
     }
   },
 

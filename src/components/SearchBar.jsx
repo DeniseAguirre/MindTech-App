@@ -1,11 +1,11 @@
-import React, { useState } from "react";
-import { Searchbar } from "react-native-paper";
-import { StyleSheet, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import * as React from "react";
+import { Searchbar } from "react-native-paper";
+import { StyleSheet } from "react-native";
 
 const SearchBar = () => {
   const navigation = useNavigation();
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = React.useState("");
   const onChangeSearch = (query) => setSearchQuery(query);
 
   const handleSearch = () => {
@@ -18,24 +18,19 @@ const SearchBar = () => {
   };
 
   return (
-    <View style={{ flex: 1, marginBottom: 16 }}>
-      <Searchbar
-        style={styles.search}
-        placeholder="Search"
-        onChangeText={onChangeSearch}
-        value={searchQuery}
-        inputStyle={styles.inputStyle}
-        onSubmitEditing={handleSearch}
-      />
-    </View>
+    <Searchbar
+      style={styles.search}
+      placeholder="Search"
+      onChangeText={onChangeSearch}
+      value={searchQuery}
+      onSubmitEditing={handleSearch}
+    />
   );
 };
 
 const styles = StyleSheet.create({
   search: {
-    top: 10,
-    width: "100%",
-    backgroundColor: "#fff",
+    margin: 4,
   },
 });
 

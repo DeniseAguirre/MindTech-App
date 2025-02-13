@@ -30,7 +30,7 @@ const App = () => {
   const Stack = createStackNavigator();
 
   return (
-    <GestureHandlerRootView>
+    <GestureHandlerRootView style={{ flex: 1 }}>
       <NavigationContainer>
         <Stack.Navigator
           initialRouteName="TabNavigator"

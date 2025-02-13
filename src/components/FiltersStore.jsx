@@ -1,221 +1,112 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
-import RNPickerSelect from "react-native-picker-select";
-
-import {
-  View,
-  StyleSheet,
-  Dimensions,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-} from "react-native";
+import { useState, useEffect, useMemo } from "react";
+import { View, StyleSheet, FlatList, ActivityIndicator } from "react-native";
+import { Card, IconButton, Searchbar, Text, Button } from "react-native-paper";
+import { useNavigation } from "@react-navigation/native";
 import useStore from "../store/store";
 import { FontFamily } from "../../GlobalStyles";
-import { Card, IconButton, Searchbar, Text } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
+import DropDownPicker from "react-native-dropdown-picker";
 
 function FiltersStore() {
-  const apiUrl = process.env.EXPO_PUBLIC_API_URL;
   const navigation = useNavigation();
-
-  const [categories, setCategories] = useState([]);
-  const [brands, setBrands] = useState([]);
-
-  const [selectedCategory, setSelectedCategory] = useState([]);
-  const [selectedBrand, setSelectedBrand] = useState([]);
-
-  const [categoriesPicker, setCategoriesPicker] = useState([]);
-  const [brandsPicker, setBrandsPicker] = useState([]);
-  const [searchQuery, setSearchQuery] = useState("");
-
   const {
     allProducts,
     getAllProducts,
+    categories,
+    brands,
+    getCategories,
+    getBrands,
     favorites,
-    handleFavorite,
-    removeFavorite,
+    toggleFavorite,
   } = useStore();
-  const [products, setProducts] = useState([]);
+
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedBrand, setSelectedBrand] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [orderPrice, setOrderPrice] = useState("");
+  const [loading, setLoading] = useState(true);
 
-  const [loading, setLoading] = useState(false);
-  const numColumns = 2;
-  const [favoriteItems, setFavoriteItems] = useState([]);
-  const maxLength = 40;
-
-  const onChangeSearch = (query) => setSearchQuery(query);
-
-  const handleCategoryChange = (value) => {
-    setSelectedCategory(value);
-  };
-
-  const handleBrandChange = (value) => {
-    setSelectedBrand(value);
-  };
-
-  //axios para traer las categorias:
-  useEffect(() => {
-    axios
-      .get(apiUrl + "categories")
-      .then((response) => {
-        setCategories(response.data.categories);
-        console.log(response);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, []);
+  const [openCategory, setOpenCategory] = useState(false);
+  const [openBrand, setOpenBrand] = useState(false);
 
   useEffect(() => {
-    axios
-      .get(apiUrl + "brands")
-      .then((response) => {
-        setBrands(response.data.brands);
-        console.log(response);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  }, []);
-
-  useEffect(() => {
-    let listCategories = [];
-
-    listCategories = categories?.map((item) => {
-      return {
-        value: item?._id,
-        label: item?.name,
-      };
-    });
-    console.log(listCategories);
-
-    setCategoriesPicker(listCategories);
-  }, [categories]);
-
-  useEffect(() => {
-    let listBrands = [];
-
-    listBrands = brands?.map((item) => {
-      return {
-        value: item?._id,
-        label: item?.name,
-      };
-    });
-
-    setBrandsPicker(listBrands);
-  }, [brands]);
-
-  const comparePrices = (a, b) => {
-    if (orderPrice === "descendent") {
-      return a.price - b.price;
-    } else if (orderPrice === "ascendent") {
-      return b.price - a.price;
-    }
-    return 0;
-  };
-
-  useEffect(() => {
-    if (filteredProducts?.length > 0) {
+    const fetchData = async () => {
+      await Promise.all([getAllProducts(), getCategories(), getBrands()]);
       setLoading(false);
-    }
-  }, [filteredProducts]);
+    };
+    fetchData();
+  }, [getAllProducts, getCategories, getBrands]);
 
-  const filterProducts = (products) => {
-    let filteredProducts = products;
+  const categoryItems = useMemo(
+    () => [
+      { label: "Todas las categorías", value: null },
+      ...categories.map((cat) => ({
+        label: cat.name,
+        value: cat._id,
+      })),
+    ],
+    [categories]
+  );
 
-    if (searchQuery.trim() !== "") {
-      filteredProducts = filteredProducts.filter((product) =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
+  const brandItems = useMemo(
+    () => [
+      { label: "Todas las marcas", value: null },
+      ...brands.map((b) => ({
+        label: b.name,
+        value: b._id,
+      })),
+    ],
+    [brands]
+  );
 
-    if (selectedCategory) {
-      console.log("selected category", selectedCategory);
-      filteredProducts = filteredProducts.filter((product) =>
-        selectedCategory.includes(product.category)
-      );
-    }
-
-    if (selectedBrand) {
-      console.log("selected brand", selectedBrand);
-      filteredProducts = filteredProducts.filter((product) =>
-        selectedBrand.includes(product.brand)
-      );
-    }
-
-    return filteredProducts;
-  };
-
-  const filteredProducts = filterProducts(allProducts).sort(comparePrices);
-
-  // useEffect(() => {
-  //   getAllProducts();
-  //   if (products?.length > 0) {
-  //     setLoading(false);
-  //   }
-  // }, [products]);
-
-  const toggleFavorite = (itemId) => {
-    if (favoriteItems.includes(itemId)) {
-      setFavoriteItems(favoriteItems.filter((item) => item !== itemId));
-    } else {
-      setFavoriteItems([...favoriteItems, itemId]);
-    }
-  };
+  const filteredProducts = useMemo(() => {
+    return allProducts
+      .filter(
+        (product) =>
+          (!selectedCategory || product.category._id === selectedCategory) &&
+          (!selectedBrand || product.brand._id === selectedBrand) &&
+          product.name.toLowerCase().includes(searchQuery.toLowerCase())
+      )
+      .sort((a, b) => {
+        if (orderPrice === "descendent") return a.price - b.price;
+        if (orderPrice === "ascendent") return b.price - a.price;
+        return 0;
+      });
+  }, [allProducts, selectedCategory, selectedBrand, searchQuery, orderPrice]);
 
   const handleCoverPress = (item) => {
-    console.log(item);
     navigation.navigate("Details", { item: item });
   };
 
-  const formatPrice = (price) => {
-    return price.toLocaleString("en-US", {
-      style: "currency",
-      currency: "USD",
-      minimumFractionDigits: 2,
-    });
-  };
-
-  const shortenText = (text) => {
-    if (text.length <= maxLength) {
-      return text;
-    } else {
-      return text.substring(0, maxLength) + "...";
-    }
-  };
-
   const renderItem = ({ item }) => {
-    const isFavorite = favoriteItems.includes(item._id);
+    const isFavorite = favorites.some((fav) => fav._id === item._id);
 
     return (
       <View style={styles.item}>
         <Card style={styles.card}>
-          <TouchableOpacity
-            style={styles.coverTouchable}
+          <Card.Cover
+            style={styles.cover}
+            source={{ uri: item.images[0] }}
             onPress={() => handleCoverPress(item)}
-          >
-            <Card.Cover style={styles.cover} source={{ uri: item.images[0] }} />
-          </TouchableOpacity>
-
+          />
           <Card.Content style={styles.title}>
-            <Text style={styles.name}>{shortenText(item.name)}</Text>
+            <Text style={styles.name}>
+              {item.name.length > 40
+                ? item.name.substring(0, 40) + "..."
+                : item.name}
+            </Text>
           </Card.Content>
-          <View>
-            <Text style={styles.price}>{formatPrice(item.price)}</Text>
+          <View style={styles.priceContainer}>
+            <Text style={styles.price}>
+              {item.price.toLocaleString("en-US", {
+                style: "currency",
+                currency: "USD",
+              })}
+            </Text>
             <IconButton
-              style={styles.heartIcon}
               icon={isFavorite ? "heart" : "heart-outline"}
               color={isFavorite ? "#FF0000" : "#000000"}
               size={20}
-              onPress={() => {
-                toggleFavorite(item._id);
-                if (isFavorite) {
-                  removeFavorite(item._id);
-                } else {
-                  handleFavorite(item._id, item.name, item.images[0]);
-                }
-              }}
+              onPress={() => toggleFavorite(item)}
             />
           </View>
         </Card>
@@ -223,202 +114,185 @@ function FiltersStore() {
     );
   };
 
-  return (
-    <View>
-      <View style={styles.containerFilterStore}>
-        <View style={styles.containerPicker}>
-          <RNPickerSelect
-            onValueChange={handleCategoryChange}
-            items={categoriesPicker}
-            placeholder={{ label: "Select a category", value: null }}
-            value={selectedCategory}
-            style={pickerSelectStyles}
-          />
-          <RNPickerSelect
-            onValueChange={handleBrandChange}
-            items={brandsPicker}
-            placeholder={{ label: "Select a brand", value: null }}
-            value={selectedBrand}
-            style={pickerSelectStyles}
-          />
-        </View>
-        <View style={styles.searchContainer}>
-          <Searchbar
-            style={styles.search}
-            placeholder="Search"
-            onChangeText={onChangeSearch}
-            value={searchQuery}
-            inputStyle={styles.inputStyle}
-          />
-        </View>
-        <View style={styles.containerFilter}>
-          <View style={styles.containerOrderPrice}>
-            <TouchableOpacity
-              style={styles.buttonPrice}
-              onPress={() => setOrderPrice("descendent")}
-            >
-              <Text style={styles.buttonTitle}>lowest to highest price</Text>
-            </TouchableOpacity>
+  const clearFilters = () => {
+    setSelectedCategory(null);
+    setSelectedBrand(null);
+    setSearchQuery("");
+    setOrderPrice("");
+  };
 
-            <TouchableOpacity
-              style={styles.buttonPrice}
-              onPress={() => setOrderPrice("ascendent")}
-            >
-              <Text style={styles.buttonTitle}>highest to lowest price</Text>
-            </TouchableOpacity>
-          </View>
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#000" />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.filtersContainer}>
+        <DropDownPicker
+          open={openCategory}
+          value={selectedCategory}
+          items={categoryItems}
+          setOpen={setOpenCategory}
+          setValue={setSelectedCategory}
+          placeholder="Selecciona una categoría"
+          style={styles.dropdown}
+          dropDownContainerStyle={styles.dropdownContainer}
+          zIndex={3000}
+          zIndexInverse={1000}
+        />
+        <DropDownPicker
+          open={openBrand}
+          value={selectedBrand}
+          items={brandItems}
+          setOpen={setOpenBrand}
+          setValue={setSelectedBrand}
+          placeholder="Selecciona una marca"
+          style={styles.dropdown}
+          dropDownContainerStyle={styles.dropdownContainer}
+          zIndex={2000}
+          zIndexInverse={2000}
+        />
+        <Searchbar
+          placeholder="Buscar"
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={styles.searchbar}
+        />
+        <View style={styles.orderContainer}>
+          <Button
+            mode="contained"
+            onPress={() => setOrderPrice("descendent")}
+            style={[
+              styles.orderButton,
+              orderPrice === "descendent" && styles.activeButton,
+            ]}
+            labelStyle={styles.orderButtonText}
+          >
+            Precio: Bajo a Alto
+          </Button>
+          <Button
+            mode="contained"
+            onPress={() => setOrderPrice("ascendent")}
+            style={[
+              styles.orderButton,
+              orderPrice === "ascendent" && styles.activeButton,
+            ]}
+            labelStyle={styles.orderButtonText}
+          >
+            Precio: Alto a Bajo
+          </Button>
         </View>
+        <Button
+          mode="outlined"
+          onPress={clearFilters}
+          style={styles.clearButton}
+          labelStyle={styles.clearButtonText}
+        >
+          Limpiar filtros
+        </Button>
       </View>
       {filteredProducts.length > 0 ? (
-        <View style={styles.containerFlatList}>
-          {loading ? (
-            <ActivityIndicator />
-          ) : (
-            <FlatList
-              data={filteredProducts}
-              horizontal={false}
-              renderItem={renderItem}
-              keyExtractor={(item) => item._id}
-              contentContainerStyle={styles.gridContainer}
-              key={`flatlist-${numColumns}`}
-              numColumns={numColumns}
-            />
-          )}
-        </View>
+        <FlatList
+          data={filteredProducts}
+          renderItem={renderItem}
+          keyExtractor={(item) => item._id}
+          numColumns={2}
+          contentContainerStyle={styles.productList}
+        />
       ) : (
-        <View style={styles.containerFlatList}>
-          <Text style={{ left: 100 }}>No search matches</Text>
-        </View>
+        <Text style={styles.noResults}>No se encontraron productos</Text>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  containerFilterStore: {
+  container: {
     flex: 1,
-    width: Dimensions.get("window").width,
-  },
-  searchContainer: {
-    width: Dimensions.get("window").width,
-    alignItems: "center",
-  },
-  search: {
-    position: "absolute",
-    width: "90%",
     backgroundColor: "#fff",
-    top: -205,
   },
-  containerFilter: {
-    alignItems: "flex-end",
-    top: -140,
-    right: 10,
-    zIndex: 10,
+  filtersContainer: {
+    padding: 16,
+    zIndex: 1000,
   },
-
-  card: {
-    height: 210,
-    width: 154,
+  dropdown: {
+    marginBottom: 16,
   },
-  containerFlatList: {
+  dropdownContainer: {
+    borderColor: "#ccc",
+  },
+  searchbar: {
+    marginBottom: 16,
+  },
+  orderContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  orderButton: {
     flex: 1,
-    paddingTop: 10,
-    left: 20,
-    top: -110,
-    position: "relative",
+    marginRight: 8,
   },
-  gridContainer: {
-    padding: 1,
-    left: 5,
+  activeButton: {
+    backgroundColor: "#007AFF",
+  },
+  orderButtonText: {
+    fontFamily: FontFamily.poppinsRegular,
+    fontSize: 12,
+  },
+  clearButton: {
+    marginBottom: 16,
+  },
+  clearButtonText: {
+    fontFamily: FontFamily.poppinsRegular,
+    fontSize: 14,
+  },
+  productList: {
+    padding: 16,
   },
   item: {
-    marginBottom: 20,
-    width: Dimensions.get("window").width / 2 - 16,
+    flex: 1,
+    width: "50%",
+    padding: 4,
   },
-
+  card: {
+    borderRadius: 8,
+    overflow: "hidden",
+  },
   cover: {
-    height: "60%",
+    height: 150,
   },
-
-  heartIcon: {
-    top: -52,
-    left: 107,
-  },
-
   title: {
-    textAlign: "left",
-    paddingBottom: 1,
-    alignItems: "flex-start",
-    position: "absolute",
-    top: 124,
-  },
-  coverTouchable: {
-    height: 200,
+    padding: 8,
   },
   name: {
-    fontSize: 11,
-    fontWeight: "500",
+    fontSize: 14,
     fontFamily: FontFamily.poppinsRegular,
-    marginTop: 5,
+  },
+  priceContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 8,
   },
   price: {
-    fontSize: 15,
-    top: -18,
-    left: 15,
+    fontSize: 14,
     fontFamily: FontFamily.poppinsMedium,
     fontWeight: "bold",
   },
-  containerOrderPrice: {
-    flexDirection: "row",
-    top: -2,
-    padding: 5,
-    width: "95%",
-  },
-  buttonTitle: {
-    fontSize: 14,
-    padding: 10,
-    color: "#fff",
-  },
-  containerPicker: {
+  loadingContainer: {
     flex: 1,
-    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  buttonPrice: {
-    borderWidth: 2,
-    borderColor: "#fff",
-    backgroundColor: "#000",
-    borderRadius: 8,
-  },
-});
-
-const pickerSelectStyles = StyleSheet.create({
-  inputIOS: {
-    margin: 15,
-    width: 152,
-    fontSize: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 10,
-    borderWidth: 1,
-    borderColor: "gray",
-    borderRadius: 4,
-    color: "black",
-    paddingRight: 30,
-  },
-  inputAndroid: {
-    fontSize: 16,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderWidth: 0.5,
-    borderColor: "purple",
-    borderRadius: 8,
-    color: "black",
-    paddingRight: 30,
-  },
-  picker: {
-    backgroundColor: "#000",
-    borderWidth: 2,
-    borderColor: "gray",
-    borderRadius: 10,
+  noResults: {
+    textAlign: "center",
+    marginTop: 16,
+    fontSize: 18,
+    fontFamily: FontFamily.poppinsRegular,
   },
 });
 
