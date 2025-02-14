@@ -9,44 +9,35 @@ import {
   Dimensions,
   ScrollView,
 } from "react-native";
-import { useNavigation, useRoute } from "@react-navigation/native";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import useStore from "../store/store";
-import LoginModal from "../components/LoginModal";
 import { Icon, IconButton } from "react-native-paper";
 import { Border, Color, FontFamily, FontSize } from "../../GlobalStyles";
 import CartHeader from "../components/CartHeader";
+import { Product } from "../interfaces/IProduct";
+import { StackNavigationProp } from "@react-navigation/stack";
+import { RootStackParamList } from "../types/navigation";
 
+type SearchScreenRouteProp = RouteProp<
+  { Details: { item: Product } },
+  "Details"
+>;
 const Details = () => {
-  const route = useRoute();
+  const route = useRoute<SearchScreenRouteProp>();
   const { item } = route.params;
-  const navigation = useNavigation();
-  const { addToCart, toggleFavorite, favorites, isLoading, error, user } =
-    useStore();
+  const navigation =
+    useNavigation<StackNavigationProp<RootStackParamList, "MyCart">>();
+  const { addToCart, toggleFavorite, favorites, isLoading } = useStore();
 
   const isFavorite = favorites.some((fav) => fav._id === item._id);
 
   const handleAddToCart = () => {
-    const cartItem = {
-      product_id: item._id,
-      name: item.name,
-      price: item.price,
-      quantity: 1,
-      images: item.images,
-    };
-    addToCart(cartItem);
+    addToCart(item);
     navigation.navigate("MyCart");
   };
 
   const handleToggleFavorite = async () => {
-    if (!user) {
-      setModalVisible(true);
-      return;
-    }
-
-    const result = await toggleFavorite(item);
-    if (!result.success) {
-      Alert.alert("Error", result.error || "No se pudo actualizar favoritos");
-    }
+    toggleFavorite(item);
   };
 
   if (isLoading) {
@@ -78,7 +69,7 @@ const Details = () => {
           <Text style={styles.productPrice}>{item.price.toFixed(2)} €</Text>
           <TouchableOpacity
             style={styles.favoriteButton}
-            onPress={handleToggleFavorite}
+            onPress={() => handleToggleFavorite()}
           >
             <Icon
               source={isFavorite ? "heart" : "heart-outline"}
@@ -203,6 +194,10 @@ const styles = StyleSheet.create({
     marginVertical: 40,
     fontFamily: FontFamily.montserratLight,
     lineHeight: 23,
+  },
+  productBrand: {
+    color: "gray",
+    fontSize: 12,
   },
 });
 
