@@ -1,5 +1,8 @@
 import React from "react";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import {
+  createBottomTabNavigator,
+  BottomTabBarProps,
+} from "@react-navigation/bottom-tabs";
 import Home from "../screens/Home";
 import SignIn from "../screens/SignIn";
 import Search from "../screens/Search";
@@ -7,11 +10,14 @@ import MyTabBar from "../components/TabBarCustom";
 import Favorites from "../screens/Favorites";
 import Store from "../screens/Store";
 
+// Definimos el tipo para las propiedades de nuestro Tab.Navigator si es necesario.
 const Tab = createBottomTabNavigator();
 
-export default function TabNavigator() {
+const TabNavigator: React.FC = () => {
   return (
-    <Tab.Navigator tabBar={(props) => <MyTabBar {...props} />}>
+    <Tab.Navigator
+      tabBar={(props: BottomTabBarProps) => <MyTabBar {...props} />}
+    >
       <Tab.Screen
         name="Home"
         component={Home}
@@ -39,4 +45,6 @@ export default function TabNavigator() {
       />
     </Tab.Navigator>
   );
-}
+};
+
+export default TabNavigator;

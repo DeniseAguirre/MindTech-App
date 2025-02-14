@@ -1,5 +1,4 @@
 import React, { useEffect } from "react";
-
 import { NavigationContainer } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import TabNavigator from "./src/navigations/TabNavigator";
@@ -9,13 +8,15 @@ import Details from "./src/screens/Details";
 import MyCart from "./src/components/MyCart";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import useStore from "./src/store/store";
+import { RootStackParamList } from "./src/types/navigation";
 
-const App = () => {
+const App: React.FC = () => {
   const { initializeStore } = useStore();
 
   useEffect(() => {
     initializeStore();
   }, []);
+
   const [fontsLoaded, error] = useFonts({
     Poppins_regular: require("./assets/fonts/Poppins_regular.ttf"),
     Poppins_medium: require("./assets/fonts/Poppins_medium.ttf"),
@@ -27,7 +28,8 @@ const App = () => {
   if (!fontsLoaded && !error) {
     return null;
   }
-  const Stack = createStackNavigator();
+
+  const Stack = createStackNavigator<RootStackParamList>();
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -45,4 +47,5 @@ const App = () => {
     </GestureHandlerRootView>
   );
 };
+
 export default App;

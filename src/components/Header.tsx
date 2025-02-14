@@ -3,14 +3,15 @@ import { StyleSheet, View, Dimensions, Text } from "react-native";
 import { Color, FontSize } from "../../GlobalStyles";
 import CartHeader from "./CartHeader";
 
-function Header() {
+const Header: React.FC = () => {
   return (
     <View style={styles.headerContainer}>
       <Text style={styles.mindtech}>MINDTECH</Text>
       <CartHeader />
     </View>
   );
-}
+};
+
 const styles = StyleSheet.create({
   headerContainer: {
     width: Dimensions.get("window").width,
@@ -24,7 +25,7 @@ const styles = StyleSheet.create({
     height: 79,
     fontSize: FontSize.size_base,
     color: Color.black,
-    fontWeight: 700,
+    fontWeight: "700",
   },
 });
 

@@ -2,13 +2,72 @@ import axios from "axios";
 import { create } from "zustand";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+interface Product {
+  _id: string;
+  name: string;
+  description: string;
+  images: string[];
+  category: Category;
+  brand: Brand;
+  price: number;
+  quantity: number;
+  __v: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Category {
+  _id: string;
+  name: string;
+}
+interface Brand {
+  _id: string;
+  name: string;
+}
+
+interface Cart {
+  items: Product[];
+  total: number;
+}
+
+interface Store {
+  allProducts: Product[];
+  oneProduct: Product[];
+  user: object | null;
+  token: string | null;
+  cart: Cart;
+  favorites: Product[];
+  categories: any[];
+  brands: any[];
+  selectCheckboxes: any[];
+  isLoading: boolean;
+  error: string | null;
+
+  initializeStore: () => Promise<void>;
+  getAllProducts: () => Promise<void>;
+  getCategories: () => Promise<void>;
+  getBrands: () => Promise<void>;
+  getOneProduct: (id: string) => Promise<void>;
+  login: (token: string) => Promise<void>;
+  logout: () => Promise<void>;
+  getUser: (email: string) => Promise<void>;
+  addToCart: (product: Product) => Promise<void>;
+  removeFromCart: (productId: string) => Promise<void>;
+  clearCart: () => Promise<void>;
+  toggleFavorite: (product: Product) => Promise<void>;
+  setSelectCheckboxes: (checkboxes: any[]) => void;
+  deleteProducts: (dataDelete: any) => Promise<void>;
+  createProduct: (newProduct: any) => Promise<any>;
+  clearError: () => void;
+}
+
 const apiUrl = process.env.EXPO_PUBLIC_API_URL;
 
-const useStore = create((set, get) => ({
+const useStore = create<Store>((set, get) => ({
   allProducts: [],
   oneProduct: [],
-  user: undefined,
-  token: undefined,
+  user: null,
+  token: null,
   cart: { items: [], total: 0 },
   favorites: [],
   categories: [],
@@ -86,7 +145,7 @@ const useStore = create((set, get) => ({
     }
   },
 
-  getOneProduct: async (id) => {
+  getOneProduct: async (id: string) => {
     set({ isLoading: true });
     try {
       const response = await axios.get(apiUrl + "products/one?one=" + id);
@@ -96,7 +155,7 @@ const useStore = create((set, get) => ({
     }
   },
 
-  login: async (token) => {
+  login: async (token: string) => {
     set({ isLoading: true });
     try {
       await AsyncStorage.setItem("token", token);
@@ -110,12 +169,10 @@ const useStore = create((set, get) => ({
     set({ isLoading: true });
     try {
       await AsyncStorage.removeItem("token");
-
       await AsyncStorage.removeItem("cart");
       set({
-        token: undefined,
-        user: undefined,
-
+        token: null,
+        user: null,
         cart: { items: [], total: 0 },
         isLoading: false,
       });
@@ -124,7 +181,7 @@ const useStore = create((set, get) => ({
     }
   },
 
-  getUser: async (email) => {
+  getUser: async (email: string) => {
     set({ isLoading: true });
     try {
       const response = await axios.get(apiUrl + "users/one?one=" + email);
@@ -136,19 +193,17 @@ const useStore = create((set, get) => ({
     }
   },
 
-  addToCart: async (product) => {
+  addToCart: async (product: Product) => {
     set({ isLoading: true });
     try {
       const { cart } = get();
-      const existingItem = cart.items.find(
-        (item) => item.product_id === product.product_id
-      );
+      const existingItem = cart.items.find((item) => item._id === product._id);
       let updatedCart;
       if (existingItem) {
         updatedCart = {
           ...cart,
           items: cart.items.map((item) =>
-            item.product_id === product.product_id
+            item._id === product._id
               ? { ...item, quantity: item.quantity + 1 }
               : item
           ),
@@ -170,13 +225,11 @@ const useStore = create((set, get) => ({
     }
   },
 
-  removeFromCart: async (productId) => {
+  removeFromCart: async (productId: string) => {
     set({ isLoading: true });
     try {
       const { cart } = get();
-      const updatedItems = cart.items.filter(
-        (item) => item.product_id !== productId
-      );
+      const updatedItems = cart.items.filter((item) => item._id !== productId);
       const updatedCart = {
         items: updatedItems,
         total: updatedItems.reduce(
@@ -201,7 +254,7 @@ const useStore = create((set, get) => ({
     }
   },
 
-  toggleFavorite: async (product) => {
+  toggleFavorite: async (product: Product): Promise<void> => {
     const { favorites } = get();
     set({ isLoading: true });
     try {
@@ -219,16 +272,13 @@ const useStore = create((set, get) => ({
     } catch (error) {
       console.error("Error al actualizar favoritos:", error);
       set({ error: "Error al actualizar favoritos", isLoading: false });
-      return {
-        success: false,
-        error: error.message || "Error al actualizar favoritos",
-      };
     }
   },
 
-  setSelectCheckboxes: (checkboxes) => set({ selectCheckboxes: checkboxes }),
+  setSelectCheckboxes: (checkboxes: any[]) =>
+    set({ selectCheckboxes: checkboxes }),
 
-  deleteProducts: async (dataDelete) => {
+  deleteProducts: async (dataDelete: any) => {
     set({ isLoading: true });
     try {
       await axios.delete(apiUrl + "products/delete", { data: dataDelete });
@@ -239,7 +289,7 @@ const useStore = create((set, get) => ({
     }
   },
 
-  createProduct: async (newProduct) => {
+  createProduct: async (newProduct: any) => {
     set({ isLoading: true });
     try {
       const response = await axios.post(
@@ -256,7 +306,6 @@ const useStore = create((set, get) => ({
       return response.data;
     } catch (error) {
       set({ error: "Error al crear producto", isLoading: false });
-      throw new Error(error.message);
     }
   },
 

@@ -27,6 +27,9 @@
     },
     "extra": {
       "newArchEnabled": true
+    },
+    "packagerOpts": {
+      "sourceExts": ["ts", "tsx", "js", "jsx"]
     }
   }
 }
